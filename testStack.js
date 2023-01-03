@@ -18,6 +18,7 @@ zaxisSVG = svg.append("g")
 
 let elements = ["PM2.5(微克每立方米)", "PM10(微克每立方米)", "SO2(微克每立方米)", "NO2(微克每立方米)", "CO(毫克每立方米)"]
 
+//正常扇形
 arc = d3.arc()
     .innerRadius(d => y(d[0]))
     .outerRadius(d => y(d[1]))
@@ -26,6 +27,7 @@ arc = d3.arc()
     .padAngle(0.2)
     .padRadius(innerRadius)
 
+//用于更新数据时的扇形
 arc1 = d3.arc()
     .innerRadius(d => y(d[0]))
     .outerRadius(d => y(d[1]))
@@ -34,6 +36,7 @@ arc1 = d3.arc()
     .padAngle(0.2)
     .padRadius(innerRadius)
 
+//用于移出数据时的扇形
 arc2 = d3.arc()
     .innerRadius(d => y(d[0]))
     .outerRadius(d => y(d[1]))
@@ -54,19 +57,9 @@ async function dataPreprocess(year, province) {
 
         //根据传参的年份和省份选择数据
         if (d.year == year && d.province == province) {
-            let total = 0;
-            let reals = 0;
-            for (let i = 0; i < 5; ++i) {
-                // console.log(columns[i])
-                reals += d[columns[i]] == 0 ? 0 : 1
-                total += d[columns[i]] = +d[columns[i]]
-            }
-            d.average = (total / reals).toFixed(2)
-            d.total = total.toFixed(2)
 
             for (let i = 0; i < 5; ++i) {
-                d["ori" + columns[i]] = d[columns[i]]
-                d[columns[i]] = (d[columns[i]] / reals)
+                d["ori" + columns[i]] = d[columns[i]]= +d[columns[i]]
             }
 
             return d;
@@ -82,9 +75,10 @@ async function dataPreprocess(year, province) {
     for (let i = 0; i < data.length; i++) {
         for (j in elements) {
             data[i][elements[j]] /= elementMax[j]
-            data[i][elements[j]] *= 10
+            data[i][elements[j]] *= data.length
         }
     }
+    console.log(data)
     return data;
 }
 
@@ -96,7 +90,7 @@ async function updateArc(year, province) {
     let chartNum = 0;
 
     let removeTransition = d3.transition().duration(200)
-    let updateTransition = removeTransition.transition().duration(500)
+    let updateTransition = removeTransition.transition().duration(200)
 
     d3.selectAll(".img")
         .transition(removeTransition)
@@ -158,7 +152,7 @@ function drawAxisText(data) {
         .align(0)
 
     y = d3.scaleRadial()
-        .domain([0, 5])
+        .domain([0, 6])
         .range([innerRadius, outerRadius])
 
 
@@ -178,11 +172,11 @@ function drawAxisText(data) {
             `)
             .call(g => g.append("text")
                 .attr("transform", d => ((x(d["月份"]) + x.bandwidth() / 2) * 180 / Math.PI - 90) < 0
-                    ? "translate(" + (325 - (y(d['average']) + 10) + 10) + ")rotate(" + Math.abs(((x(d["月份"]) + x.bandwidth() / 2) * 180 / Math.PI - 90)) + ")"
-                    : "translate(" + (325 - (y(d['average']) + 10) + 10) + ")rotate(-" + ((x(d["月份"]) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")")
+                    ? "translate(" + (325 - (outerRadius + 10) + 10) + ")rotate(" + Math.abs(((x(d["月份"]) + x.bandwidth() / 2) * 180 / Math.PI - 90)) + ")"
+                    : "translate(" + (325 - (outerRadius + 10) + 10) + ")rotate(-" + ((x(d["月份"]) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")")
                 .text(d => d["月份"]))
             .call(g => g.attr("text-anchor", function (d) { return (x(d["月份"]) + x.bandwidth() / 2 + Math.PI) % (2 * Math.PI) < Math.PI ? "end" : "start"; })
-                .attr("transform", function (d) { return "rotate(" + ((x(d["月份"]) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")" + "translate(" + (y(d['average']) + 20) + ",0)"; })
+                .attr("transform", function (d) { return "rotate(" + ((x(d["月份"]) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")" + "translate(" + (outerRadius + 20) + ",0)"; })
             )
         )
 
@@ -268,6 +262,7 @@ async function drawBars() {
                     .attr("fill", (d, i) => {
                         d.chartNum = chartNum
                         d.month = i + 1;
+                        console.log(d)
                         return ["#FC8C79", "#DC768F", "#AC6C99", "#776491", "#495879"][i === 11 ? chartNum++ : chartNum]
                     }
                     )
