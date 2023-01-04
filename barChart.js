@@ -3,67 +3,101 @@ height = width
 
 chartHeight = 400
 chartWidth = 400
-marginTop = 30 // top margin, in pixels
+
+marginTop = 100 // top margin, in pixels
 marginRight = 0 // right margin, in pixels
 marginBottom = 30 // bottom margin, in pixels
 marginLeft = 40 // left margin, in pixels
 
-let year = "2013";
-let province = "福建"
+var year = "2013";
+var province = "福建"
 
 const svg = d3.select("#wrapper").append("svg")
     .style("width", width)
     .style("height", height)
     .style("font", "10px sans-serif")
-let path = svg.append("g")
-    .selectAll("g")
-    .style("transform", `translate(500px, 500px)`)
 
-let elements1 = ["PM2.5(微克每立方米)", "PM10(微克每立方米)", "SO2(微克每立方米)", "NO2(微克每立方米)", "CO(毫克每立方米)"]
-let elements2 = ["PM2.5(微克每立方米)", "PM10(微克每立方米)"]
-let elements3 = ["SO2(微克每立方米)", "NO2(微克每立方米)", "CO(毫克每立方米)"]
-let elementOrder = [elements1, elements2, elements3]
-let colors =  ["#d53e4f", "#fdae61", "#fee08b", "#e6f598", "#3288bd"]
+var path = svg.append("g")
+    .selectAll("g")
+    .style("transform", `translate(${chartWidth + marginLeft}, ${chartHeight + marginTop})`)
+
+var elements1 = ["PM2.5(微克每立方米)", "PM10(微克每立方米)"]
+var elements2 = ["SO2(微克每立方米)", "NO2(微克每立方米)"]
+var elements3 = ["CO(毫克每立方米)", "O3(微克每立方米)"]
+
+var elementOrder = [elements1, elements2, elements3]
+var colors = ["#c0392b", "#d35400", "#f39c12", "#f1c40f", "#2980b9", "#16a085"]
 xaxisSVG = svg.append("g")
 yaxisSVG = svg.append("g")
 
 async function draw() {
 
-    let order = 0;
+    var order = 0;
 
     const data = await d3.csv("./data-2@12.csv", (d, _, columns) => {
         //根据传参的年份和省份选择数据
         if (d.year == year && d.province == province) {
+            d["CO(毫克每立方米)"] *= 1000;
             return d;
         }
     })
 
-    x = d3.scaleBand()
+    var x = d3.scaleBand()
         .domain(data.map(d => {
             return d["月份"]
         }))
-        .range([0, chartWidth])
+        .range([0, chartWidth + 1])
         .align(0)
 
-    xAxis = g => g
-        .attr("transform", `translate(300,500)`)
+    var xAxis = g => g
+        .attr("transform", `translate(${chartWidth + marginLeft}, ${chartHeight + marginTop})`)
         .call(d3.axisBottom(x).tickSizeOuter(0))
+        .call(g => g.append("text")
+            .attr("x", chartWidth + 10)
+            .attr("y", 15)
+            .attr("stroke", "#fff")
+            .attr("stroke-width", 5)
+            .text("年份")
+            .clone(true)
+            .attr("fill", "#000")
+            .attr("stroke", "none"))
 
     svg.append("g")
         .attr("class", "x-axis")
         .call(xAxis);
 
-    yaxisSVG = svg.append("g")
+    var yaxisSVG = svg.append("g")
         .attr("class", "y-axis")
 
     const button = svg
+        .append("g")
+
+    button
         .append("rect")
-        .attr("x", 100)
-        .attr("y", 100)
+        .attr("x", chartWidth*0.8)
+        .attr("y", chartHeight*0.54)
+        .attr("rx",14)
+        .attr("width", 90)
+        .attr("height", 45)
+        .style("fill", "none")
+        .style("stroke","black")
+
+    button
+        .append("rect")
+        .attr("x", chartWidth*0.82)
+        .attr("y", chartHeight*0.56)
+        .attr("rx",10)
+        .attr("width", 75)
+        .attr("height", 30)
+        .style("fill", "white")
+
+    button.append("text")
+        .attr("x", chartWidth*0.85)
+        .attr("y", chartHeight*0.61)
         .attr("width", 45)
         .attr("height", 45)
-        .style("fill", "green")
-        .text("Change metric")
+        .attr("fill", "black")
+        .text("切换数据组")
 
     button.node().addEventListener("click", onClick)
     function onClick() {
@@ -75,39 +109,51 @@ async function draw() {
         const removeTransition = d3.transition().duration(300)
         const updateTransition = removeTransition.transition().duration(300)
 
-        if (order % 3 == 0 || order % 3 == 1) {
+        if (order % 3 == 0) {
             initialCol = 0;
 
-        } else {
+        } else if (order % 3 == 1) {
             initialCol = 2;
         }
-        totalMax = 0;
-        
+        else {
+            initialCol = 4;
+        }
+
+        var totalMax = 0;
+
         order %= 3;
 
-        elements = elementOrder[order]
-        elementColor = colors.slice(initialCol,elements.length+ initialCol)
+        var elements = elementOrder[order]
+        var elementColor = colors.slice(initialCol, elements.length + initialCol)
 
         for (let i = 0; i < data.length; i++) {
-            total = 0;
+            var total = 0;
             for (j in elements) {
                 total += data[i][elements[j]] = +data[i][elements[j]]
             }
-            totalMax = Math.max(total,totalMax)
+            totalMax = Math.max(total, totalMax)
             data[i].id = i;
         }
 
-        y = d3.scaleLinear()
+        var y = d3.scaleLinear()
             .domain([0, totalMax])
             .range([chartHeight, 0])
 
-        yAxis = g => g
-            .attr("transform", `translate(300,100)`)
+        var yAxis = g => g
+            .attr("transform", `translate(${chartWidth + marginLeft}, ${marginTop})`)
             .transition(updateTransition)
             .call(d3.axisLeft(y).ticks(chartHeight / 60))
 
         yaxisSVG
-            .call(yAxis);
+            .call(yAxis)
+            .call(g => g.append("text")
+                .attr("y", -10)
+                .attr("stroke", "#fff")
+                .attr("stroke-width", 5)
+                .text("微克/立方米")
+                .clone(true)
+                .attr("fill", "#000")
+                .attr("stroke", "none"))
 
         const dataSeries = d3.stack().keys(data.columns.slice(initialCol, elements.length + initialCol))(data)
 
@@ -121,7 +167,7 @@ async function draw() {
             .transition(removeTransition)
             .remove()
 
-        let chartNum = 0;
+        var chartNum = 0;
         const bar = svg.append("g")
             .selectAll("g")
             .data(dataSeries)
@@ -136,20 +182,20 @@ async function draw() {
                 d.month = i + 1;
                 return elementColor[i === 11 ? chartNum++ : chartNum]
             })
-            .attr("transform", `translate(300,0)`)
+            .attr("transform", `translate(${chartWidth + marginLeft},0)`)
             .on("mousemove", function (d, i) {
                 d3.select(this).style("opacity", "0.4")
             })
             .on("mouseout", function (d) {
                 d3.select(this).style("opacity", "1")
             })
-            .attr("x", (d) => x(d.data["月份"]))
-            .attr("width", x.bandwidth() - 1 / 2)
+            .attr("x", (d) => x(d.data["月份"]) + 0.5)
+            .attr("width", x.bandwidth() - 0.75)
             .attr("height", 0)
-            .attr("y", 500)
+            .attr("y", marginTop + chartHeight)
             .transition(updateTransition)
             .attr("y", (d) => {
-                return 100 + Math.min(y(d[0]), y(d[1]))
+                return marginTop + Math.min(y(d[0]), y(d[1]) - 0.5)
             }).attr("height", (d) => y(d[0]) - y(d[1]))
 
         d3.selectAll(".barchart")
