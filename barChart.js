@@ -9,9 +9,6 @@ marginRight = 0 // right margin, in pixels
 marginBottom = 30 // bottom margin, in pixels
 marginLeft = 40 // left margin, in pixels
 
-var year = "2013";
-var province = "福建"
-
 const svg = d3.select("#wrapper").append("svg")
     .style("width", width)
     .style("height", height)
@@ -30,17 +27,44 @@ var colors = ["#c0392b", "#d35400", "#f39c12", "#f1c40f", "#2980b9", "#16a085"]
 xaxisSVG = svg.append("g")
 yaxisSVG = svg.append("g")
 
+async function dataPreprocess(province) {
+    const data = await d3.csv("./data-2@12.csv", (d, _, columns) => {
+        var year = "2013";
+        var province = "福建"
+        //根据传参的年份和省份选择数据
+        if (d.year == year && d.province == province) {
+            d["CO(毫克每立方米)"] *= 1000;
+            d.time = d["year"] + (parseInt(d["月份"]) < 6 ? "上半年" : "下半年")
+            return d;
+        }
+    })
+    var counter = 0;
+    newData = []
+    var elements = elementOrder.flat(1)
+    for (let i = 0; i < data.length; i += 6) {
+        var tmp = {}
+        dataTmp = data.slice(i, i + 6)
+        // console.log(dataTmp)
+        for (let e = 0; e < 6; e++) {
+            var total = 0;
+            for (let j = 0; j < dataTmp.length; j++) {
+                total += dataTmp[j][elements[e]] = +dataTmp[j][elements[e]]
+            }
+            // console.log(total)
+            total /= 6;
+            tmp[elements[e]] = total.toFixed(2)
+        }
+        tmp.time = dataTmp[0].time
+        newData.push(tmp)
+    }
+    console.log(newData)
+    return data;
+}
 async function draw() {
 
     var order = 0;
 
-    const data = await d3.csv("./data-2@12.csv", (d, _, columns) => {
-        //根据传参的年份和省份选择数据
-        if (d.year == year && d.province == province) {
-            d["CO(毫克每立方米)"] *= 1000;
-            return d;
-        }
-    })
+    const data = await dataPreprocess("福建");
 
     var x = d3.scaleBand()
         .domain(data.map(d => {
@@ -48,7 +72,7 @@ async function draw() {
         }))
         .range([0, chartWidth + 1])
         .align(0)
-
+    // console.log(x.domain())
     var xAxis = g => g
         .attr("transform", `translate(${chartWidth + marginLeft}, ${chartHeight + marginTop})`)
         .call(d3.axisBottom(x).tickSizeOuter(0))
@@ -74,26 +98,26 @@ async function draw() {
 
     button
         .append("rect")
-        .attr("x", chartWidth*0.8)
-        .attr("y", chartHeight*0.54)
-        .attr("rx",14)
+        .attr("x", chartWidth * 0.8)
+        .attr("y", chartHeight * 0.54)
+        .attr("rx", 14)
         .attr("width", 90)
         .attr("height", 45)
         .style("fill", "none")
-        .style("stroke","black")
+        .style("stroke", "black")
 
     button
         .append("rect")
-        .attr("x", chartWidth*0.82)
-        .attr("y", chartHeight*0.56)
-        .attr("rx",10)
+        .attr("x", chartWidth * 0.82)
+        .attr("y", chartHeight * 0.56)
+        .attr("rx", 10)
         .attr("width", 75)
         .attr("height", 30)
         .style("fill", "white")
 
     button.append("text")
-        .attr("x", chartWidth*0.85)
-        .attr("y", chartHeight*0.61)
+        .attr("x", chartWidth * 0.85)
+        .attr("y", chartHeight * 0.61)
         .attr("width", 45)
         .attr("height", 45)
         .attr("fill", "black")
