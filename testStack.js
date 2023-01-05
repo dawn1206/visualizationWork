@@ -22,8 +22,8 @@ let elements = ["PM2.5(微克每立方米)", "PM10(微克每立方米)", "SO2(�
 arc = d3.arc()
     .innerRadius(d => y(d[0]))
     .outerRadius(d => y(d[1]))
-    .startAngle(d => x(d.data["月份"]))
-    .endAngle(d => x(d.data["月份"]) + x.bandwidth())
+    .startAngle(d => x(d.data["month"]))
+    .endAngle(d => x(d.data["month"]) + x.bandwidth())
     .padAngle(0.2)
     .padRadius(innerRadius)
 
@@ -31,8 +31,8 @@ arc = d3.arc()
 arc1 = d3.arc()
     .innerRadius(d => y(d[0]))
     .outerRadius(d => y(d[1]))
-    .startAngle(d => x(d.data["月份"]))
-    .endAngle(d => x(d.data["月份"]) + 0.05)
+    .startAngle(d => x(d.data["month"]))
+    .endAngle(d => x(d.data["month"]) + 0.15)
     .padAngle(0.2)
     .padRadius(innerRadius)
 
@@ -40,8 +40,8 @@ arc1 = d3.arc()
 arc2 = d3.arc()
     .innerRadius(d => y(d[0]))
     .outerRadius(d => y(d[1]))
-    .startAngle(d => x(d.data["月份"]) + 0.46)
-    .endAngle(d => x(d.data["月份"]) + x.bandwidth())
+    .startAngle(d => x(d.data["month"]) + 0.46)
+    .endAngle(d => x(d.data["month"]) + x.bandwidth())
     .padAngle(0.2)
     .padRadius(innerRadius)
 
@@ -53,32 +53,14 @@ function sleep(time) {
 
 async function dataPreprocess(year, province) {
     let elementMax = [0, 0, 0, 0, 0]
-    const data = await d3.csv("./data-2@12.csv", (d, _, columns) => {
+    const data = await d3.csv("./radicalStack.csv", (d, _, columns) => {
 
         //根据传参的年份和省份选择数据
         if (d.year == year && d.province == province) {
-
-            for (let i = 0; i < 5; ++i) {
-                d["ori" + columns[i]] = d[columns[i]]= +d[columns[i]]
-            }
-
             return d;
         }
     })
 
-    for (let i = 0; i < data.length; i++) {
-        for (j in elements) {
-            elementMax[j] += data[i][elements[j]]
-        }
-        data[i].id = i;
-    }
-    for (let i = 0; i < data.length; i++) {
-        for (j in elements) {
-            data[i][elements[j]] /= elementMax[j]
-            data[i][elements[j]] *= data.length
-        }
-    }
-    console.log(data)
     return data;
 }
 
@@ -87,7 +69,10 @@ async function updateArc(year, province) {
 
     const data = await dataPreprocess(year, province);
 
+    console.log(data);
+
     let chartNum = 0;
+
 
     let removeTransition = d3.transition().duration(200)
     let updateTransition = removeTransition.transition().duration(200)
@@ -103,7 +88,7 @@ async function updateArc(year, province) {
         .remove()
 
     path
-        .data(d3.stack().keys(data.columns.slice(0, 5))(data))
+        .data(d3.stack().keys(elements)(data))
         .join(function (enter) {
             return enter.append("g")
         })
@@ -115,7 +100,6 @@ async function updateArc(year, province) {
                 .style("transform", `translate(450px, 450px)`)
                 .attr("fill", (d, i) => {
                     d.chartNum = chartNum
-                    d.month = i + 1;
                     return ["#FC8C79", "#DC768F", "#AC6C99", "#776491", "#495879"][i === 11 ? chartNum++ : chartNum]
                 }
                 )
@@ -144,15 +128,16 @@ async function updateArc(year, province) {
 }
 
 function drawAxisText(data) {
+
     x = d3.scaleBand()
         .domain(data.map(d => {
-            return d["月份"]
+            return d["month"]
         }))
         .range([0, 2 * Math.PI])
         .align(0)
 
     y = d3.scaleRadial()
-        .domain([0, 6])
+        .domain([0, 1])
         .range([innerRadius, outerRadius])
 
 
@@ -167,16 +152,16 @@ function drawAxisText(data) {
             .data(data)
             .join("g")
             .attr("transform", d => `
-              rotate(${((x(d["月份"]) + x.bandwidth() / 2) * 180 / Math.PI - 90)})
+              rotate(${((x(d["month"]) + x.bandwidth() / 2) * 180 / Math.PI - 90)})
               translate(${innerRadius},0)
             `)
             .call(g => g.append("text")
-                .attr("transform", d => ((x(d["月份"]) + x.bandwidth() / 2) * 180 / Math.PI - 90) < 0
-                    ? "translate(" + (325 - (outerRadius + 10) + 10) + ")rotate(" + Math.abs(((x(d["月份"]) + x.bandwidth() / 2) * 180 / Math.PI - 90)) + ")"
-                    : "translate(" + (325 - (outerRadius + 10) + 10) + ")rotate(-" + ((x(d["月份"]) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")")
-                .text(d => d["月份"]))
-            .call(g => g.attr("text-anchor", function (d) { return (x(d["月份"]) + x.bandwidth() / 2 + Math.PI) % (2 * Math.PI) < Math.PI ? "end" : "start"; })
-                .attr("transform", function (d) { return "rotate(" + ((x(d["月份"]) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")" + "translate(" + (outerRadius + 20) + ",0)"; })
+                .attr("transform", d => ((x(d["month"]) + x.bandwidth() / 2) * 180 / Math.PI - 90) < 0
+                    ? "translate(" + (325 - (outerRadius + 10) + 10) + ")rotate(" + Math.abs(((x(d["month"]) + x.bandwidth() / 2) * 180 / Math.PI - 90)) + ")"
+                    : "translate(" + (325 - (outerRadius + 10) + 10) + ")rotate(-" + ((x(d["month"]) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")")
+                .text(d => d["month"]))
+            .call(g => g.attr("text-anchor", function (d) { return (x(d["month"]) + x.bandwidth() / 2 + Math.PI) % (2 * Math.PI) < Math.PI ? "end" : "start"; })
+                .attr("transform", function (d) { return "rotate(" + ((x(d["month"]) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")" + "translate(" + (outerRadius + 20) + ",0)"; })
             )
         )
 
@@ -186,7 +171,7 @@ function drawAxisText(data) {
         .call(g => g.append("text")
             .attr("y", d => -y(y.ticks(5).pop()))
             .attr("dy", "-1em")
-            .text("月份"))
+            .text("month"))
         .call(g => g.selectAll("g")
             .data(y.ticks(5))
             .join(
@@ -209,11 +194,11 @@ function drawAxisText(data) {
                 .attr("stroke", "none")))
 
     zAxis = g => g.append("g")
-        .style("transform", `translate(450px, 300px)`)
+        .style("transform", `translate(450px, 100px)`)
         .selectAll("g")
-        .data(data.columns.slice(0, 5))
+        .data(elements)
         .join("g")
-        .attr("transform", (d, i) => `translate(-400,${(i - (data.columns.length - 1) / 2) * 20})`)
+        .attr("transform", (d, i) => `translate(-400,${(i - (elements.length - 1) / 2) * 20})`)
         .call(g => g.append("rect")
             .attr("width", 18)
             .attr("height", 18)
@@ -238,7 +223,7 @@ function drawAxisText(data) {
 async function drawBars() {
 
     let year = "2013";
-    let province = "福建"
+    let province = "北京市"
 
     async function initialSVG(year, province) {
 
@@ -249,7 +234,7 @@ async function drawBars() {
         let chartNum = 0;
 
         path
-            .data(d3.stack().keys(data.columns.slice(0, 5))(data))
+            .data(d3.stack().keys(elements)(data))
             .join(function (enter) {
                 return enter.append("g")
             })
@@ -262,7 +247,6 @@ async function drawBars() {
                     .attr("fill", (d, i) => {
                         d.chartNum = chartNum
                         d.month = i + 1;
-                        console.log(d)
                         return ["#FC8C79", "#DC768F", "#AC6C99", "#776491", "#495879"][i === 11 ? chartNum++ : chartNum]
                     }
                     )
@@ -293,19 +277,30 @@ async function drawBars() {
 
     await sleep(3000).then(() => {
         let year = "2014";
-        let province = "福建"
+        let province = "北京市"
         updateArc(year, province)
     })
 
     await sleep(3000).then(() => {
-        let year = "2013";
-        let province = "福建"
+        let year = "2015";
+        let province = "北京市"
         updateArc(year, province)
     })
 
     await sleep(3000).then(() => {
-        let year = "2014";
-        let province = "福建"
+        let year = "2016";
+        let province = "北京市"
+        updateArc(year, province)
+    })
+    await sleep(3000).then(() => {
+        let year = "2017";
+        let province = "北京市"
+        updateArc(year, province)
+    })
+
+    await sleep(3000).then(() => {
+        let year = "2018";
+        let province = "北京市"
         updateArc(year, province)
     })
 

@@ -1,8 +1,8 @@
-width = 975
+width = 1200
 height = width
 
 chartHeight = 400
-chartWidth = 400
+chartWidth = 300
 
 marginTop = 100 // top margin, in pixels
 marginRight = 0 // right margin, in pixels
@@ -28,49 +28,26 @@ xaxisSVG = svg.append("g")
 yaxisSVG = svg.append("g")
 
 async function dataPreprocess(province) {
-    const data = await d3.csv("./data-2@12.csv", (d, _, columns) => {
-        var year = "2013";
-        var province = "福建"
+    const data = await d3.csv("./barChart.csv", (d, _, columns) => {
+
         //根据传参的年份和省份选择数据
-        if (d.year == year && d.province == province) {
-            d["CO(毫克每立方米)"] *= 1000;
-            d.time = d["year"] + (parseInt(d["月份"]) < 6 ? "上半年" : "下半年")
+        if (d.province == province) {
             return d;
         }
     })
-    var counter = 0;
-    newData = []
-    var elements = elementOrder.flat(1)
-    for (let i = 0; i < data.length; i += 6) {
-        var tmp = {}
-        dataTmp = data.slice(i, i + 6)
-        // console.log(dataTmp)
-        for (let e = 0; e < 6; e++) {
-            var total = 0;
-            for (let j = 0; j < dataTmp.length; j++) {
-                total += dataTmp[j][elements[e]] = +dataTmp[j][elements[e]]
-            }
-            // console.log(total)
-            total /= 6;
-            tmp[elements[e]] = total.toFixed(2)
-        }
-        tmp.time = dataTmp[0].time
-        newData.push(tmp)
-    }
-    console.log(newData)
     return data;
 }
 async function draw() {
 
     var order = 0;
 
-    const data = await dataPreprocess("福建");
-
+    const data = await dataPreprocess("河南省");
+    console.log(data)
     var x = d3.scaleBand()
         .domain(data.map(d => {
-            return d["月份"]
+            return d.time
         }))
-        .range([0, chartWidth + 1])
+        .range([0, chartWidth*2.5])
         .align(0)
     // console.log(x.domain())
     var xAxis = g => g
@@ -98,7 +75,7 @@ async function draw() {
 
     button
         .append("rect")
-        .attr("x", chartWidth * 0.8)
+        .attr("x", chartWidth * 0.65)
         .attr("y", chartHeight * 0.54)
         .attr("rx", 14)
         .attr("width", 90)
@@ -108,7 +85,7 @@ async function draw() {
 
     button
         .append("rect")
-        .attr("x", chartWidth * 0.82)
+        .attr("x", chartWidth * 0.7)
         .attr("y", chartHeight * 0.56)
         .attr("rx", 10)
         .attr("width", 75)
@@ -116,7 +93,7 @@ async function draw() {
         .style("fill", "white")
 
     button.append("text")
-        .attr("x", chartWidth * 0.85)
+        .attr("x", chartWidth * 0.71)
         .attr("y", chartHeight * 0.61)
         .attr("width", 45)
         .attr("height", 45)
@@ -179,7 +156,10 @@ async function draw() {
                 .attr("fill", "#000")
                 .attr("stroke", "none"))
 
-        const dataSeries = d3.stack().keys(data.columns.slice(initialCol, elements.length + initialCol))(data)
+        const dataSeries = d3.stack().keys(elements)(data)
+
+
+        console.log(elements)
 
         d3.selectAll(".barchart")
             .transition(removeTransition)
@@ -203,7 +183,6 @@ async function draw() {
             .attr("class", "barchart")
             .attr("fill", (d, i) => {
                 d.chartNum = chartNum
-                d.month = i + 1;
                 return elementColor[i === 11 ? chartNum++ : chartNum]
             })
             .attr("transform", `translate(${chartWidth + marginLeft},0)`)
@@ -213,19 +192,20 @@ async function draw() {
             .on("mouseout", function (d) {
                 d3.select(this).style("opacity", "1")
             })
-            .attr("x", (d) => x(d.data["月份"]) + 0.5)
+            .attr("x", (d) => x(d.data["time"]) + 0.5)
             .attr("width", x.bandwidth() - 0.75)
             .attr("height", 0)
             .attr("y", marginTop + chartHeight)
             .transition(updateTransition)
             .attr("y", (d) => {
+                console.log(d)
                 return marginTop + Math.min(y(d[0]), y(d[1]) - 0.5)
             }).attr("height", (d) => y(d[0]) - y(d[1]))
 
         d3.selectAll(".barchart")
             .append('title')
             .text(function (d) {
-                return d.month + "月  " + d.data.province + "地区  " + elements[parseInt(d.chartNum)] + ":" + d.data[elements[parseInt(d.chartNum)]];
+                return d.data.time + "  " + d.data.province + "地区  " + elements[parseInt(d.chartNum)] + ":" + d.data[elements[parseInt(d.chartNum)]];
             });
     }
     drawBar(0)
