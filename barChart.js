@@ -1,13 +1,13 @@
-width = 1200
-height = width
+var width = 1200
+var height = width
 
-chartHeight = 400
-chartWidth = 300
+var chartHeight = 400
+var chartWidth = 300
 
-marginTop = 100 // top margin, in pixels
-marginRight = 0 // right margin, in pixels
-marginBottom = 30 // bottom margin, in pixels
-marginLeft = 40 // left margin, in pixels
+var marginTop = 100 // top margin, in pixels
+var marginRight = 0 // right margin, in pixels
+var marginBottom = 30 // bottom margin, in pixels
+var marginLeft = 40 // left margin, in pixels
 
 const svg = d3.select("#wrapper").append("svg")
     .style("width", width)
@@ -24,8 +24,9 @@ var elements3 = ["CO(毫克每立方米)", "O3(微克每立方米)"]
 
 var elementOrder = [elements1, elements2, elements3]
 var colors = ["#c0392b", "#d35400", "#f39c12", "#f1c40f", "#2980b9", "#16a085"]
-xaxisSVG = svg.append("g")
-yaxisSVG = svg.append("g")
+var xaxisSVG = svg.append("g")
+var yaxisSVG = svg.append("g")
+var zaxisSVG = svg.append("g")
 
 async function dataPreprocess(province) {
     const data = await d3.csv("./barChart.csv", (d, _, columns) => {
@@ -37,17 +38,17 @@ async function dataPreprocess(province) {
     })
     return data;
 }
-async function draw() {
+async function draw(province) {
 
     var order = 0;
 
-    const data = await dataPreprocess("河南省");
-    console.log(data)
+    const data = await dataPreprocess(province);
+
     var x = d3.scaleBand()
         .domain(data.map(d => {
             return d.time
         }))
-        .range([0, chartWidth*2.5])
+        .range([0, chartWidth * 2.5])
         .align(0)
     // console.log(x.domain())
     var xAxis = g => g
@@ -63,9 +64,39 @@ async function draw() {
             .attr("fill", "#000")
             .attr("stroke", "none"))
 
-    svg.append("g")
+    xaxisSVG
         .attr("class", "x-axis")
         .call(xAxis);
+
+    z = d3.scaleOrdinal()
+        .domain(elementOrder.flat(1))
+        .range(colors)
+
+    zAxis = g => g.append("g")
+        .style("transform", `translate(450px, 100px)`)
+        .selectAll("g")
+        .data(elementOrder.flat(1))
+        .join("g")
+        .attr("transform", (d, i) => `translate(-400,${(i - (elementOrder.flat(1).length - 1) / 2) * 20})`)
+        .call(g => g.append("rect")
+            .attr("width", 18)
+            .attr("height", 18)
+            .attr("fill", z))
+        .call(g => g.append("text")
+            .attr("x", 24)
+            .attr("y", 9)
+            .attr("dy", "0.35em")
+            .text(d => d))
+
+    zaxisSVG
+        .call(zAxis);
+
+    zaxisSVG.append("text")
+        .attr("x", width/2)
+        .attr("y", marginTop/2)
+        .style("font-size",20)
+        .text(province)
+
 
     var yaxisSVG = svg.append("g")
         .attr("class", "y-axis")
@@ -210,4 +241,4 @@ async function draw() {
     }
     drawBar(0)
 }
-draw()
+draw("天津市")
