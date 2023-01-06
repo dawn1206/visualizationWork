@@ -16,7 +16,7 @@ const svg = d3.select("#wrapper").append("svg")
 
 var path = svg.append("g")
     .selectAll("g")
-    .style("transform", `translate(${chartWidth + marginLeft}, ${chartHeight + marginTop})`)
+    .style("transform", `translate(${chartWidth + marginLeft}px, ${chartHeight + marginTop}px)`)
 
 var elements1 = ["PM2.5(微克每立方米)", "PM10(微克每立方米)"]
 var elements2 = ["SO2(微克每立方米)", "NO2(微克每立方米)"]
@@ -55,11 +55,12 @@ async function draw(province) {
         .attr("transform", `translate(${chartWidth + marginLeft}, ${chartHeight + marginTop})`)
         .call(d3.axisBottom(x).tickSizeOuter(0))
         .call(g => g.append("text")
-            .attr("x", chartWidth + 10)
+            .attr("x", chartWidth*2.6)
             .attr("y", 15)
             .attr("stroke", "#fff")
             .attr("stroke-width", 5)
-            .text("年份")
+            .text("时间段")
+            .style("font-size",12)
             .clone(true)
             .attr("fill", "#000")
             .attr("stroke", "none"))
@@ -73,7 +74,7 @@ async function draw(province) {
         .range(colors)
 
     zAxis = g => g.append("g")
-        .style("transform", `translate(450px, 100px)`)
+        .style("transform", `translate(${chartWidth + marginLeft*4}px, ${marginTop}px)`)
         .selectAll("g")
         .data(elementOrder.flat(1))
         .join("g")
@@ -86,7 +87,10 @@ async function draw(province) {
             .attr("x", 24)
             .attr("y", 9)
             .attr("dy", "0.35em")
-            .text(d => d))
+            .text(d => d)
+            .style("font-size",15)
+            )
+
 
     zaxisSVG
         .call(zAxis);
@@ -124,12 +128,13 @@ async function draw(province) {
         .style("fill", "white")
 
     button.append("text")
-        .attr("x", chartWidth * 0.71)
+        .attr("x", chartWidth * 0.67)
         .attr("y", chartHeight * 0.61)
         .attr("width", 45)
         .attr("height", 45)
         .attr("fill", "black")
         .text("切换数据组")
+        .style("font-size",15)
 
     button.node().addEventListener("click", onClick)
     function onClick() {
@@ -183,6 +188,7 @@ async function draw(province) {
                 .attr("stroke", "#fff")
                 .attr("stroke-width", 5)
                 .text("微克/立方米")
+                .style("font-size",12)
                 .clone(true)
                 .attr("fill", "#000")
                 .attr("stroke", "none"))
@@ -241,4 +247,4 @@ async function draw(province) {
     }
     drawBar(0)
 }
-draw("天津市")
+draw("海南省")
