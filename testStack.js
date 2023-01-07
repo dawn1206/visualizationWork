@@ -21,8 +21,8 @@ var xaxisSVG = svg.append("g")
 var yaxisSVG = svg.append("g")
 var zaxisSVG = svg.append("g")
 
-var elements = ["PM2.5(微克每立方米)", "PM10(微克每立方米)", "SO2(微克每立方米)", "NO2(微克每立方米)", "CO(毫克每立方米)"]
-
+var elements = ["PM2.5(微克每立方米)", "PM10(微克每立方米)", "SO2(微克每立方米)", "NO2(微克每立方米)", "CO(毫克每立方米)","O3(微克每立方米)"]
+const colors = ["#FC8C79", "#DC768F", "#AC6C99", "#776491", "#5F6189","#495879"]
 //正常扇形
 var arc = d3.arc()
 //用于更新数据时的扇形
@@ -58,8 +58,8 @@ async function updateArc(year, province) {
     // console.log(data);
 
     var chartNum = 0;
-    var removeTransition = d3.transition().duration(200)
-    var updateTransition = removeTransition.transition().duration(200)
+    var removeTransition = d3.transition().duration(500)
+    var updateTransition = removeTransition.transition().duration(500)
 
     d3.selectAll(".img")
         .transition(removeTransition)
@@ -84,15 +84,13 @@ async function updateArc(year, province) {
                 .style("transform", `translate(${Xtrans}px, ${Xtrans}px)`)
                 .attr("fill", (d, i) => {
                     d.chartNum = chartNum
-                    return ["#FC8C79", "#DC768F", "#AC6C99", "#776491", "#495879"][i === 11 ? chartNum++ : chartNum]
+                    return colors[i === 11 ? chartNum++ : chartNum]
                 }
                 )
-                .style("opacity", "0")
                 .transition(updateTransition)
-                .style("opacity", "1")
                 .attr("d", arc1)
                 .transition()
-                .duration(500)
+                .duration(updateTransition)
                 .attr("d", arc)
                 .attr("class", "img")
         }
@@ -121,13 +119,13 @@ function drawAxisText(data) {
         .align(0)
 
     var y = d3.scaleRadial()
-        .domain([0, 1])
+        .domain([0, 1.2])
         .range([innerRadius, outerRadius])
 
 
     var z = d3.scaleOrdinal()
-        .domain(data.columns.slice(0, 5))
-        .range(["#FC8C79", "#DC768F", "#AC6C99", "#776491", "#495879"])
+        .domain(elements)
+        .range(colors)
 
     var xAxis = g => g
         .attr("text-anchor", "middle")
@@ -167,7 +165,7 @@ function drawAxisText(data) {
             .attr("fill", "none")
             .call(g => g.append("circle")
                 .attr("stroke", "#000")
-                .attr("stroke-opacity", 0.5)
+                .attr("stroke-opacity", 0.3)
                 .attr("r", y))
             .call(g => g.append("text")
                 .attr("y", d => -y(d))
@@ -261,11 +259,11 @@ async function drawBars() {
                     .style("transform", `translate(${Xtrans}px, ${Ytrans}px)`)
                     .attr("fill", (d, i) => {
                         d.chartNum = chartNum
-                        return ["#FC8C79", "#DC768F", "#AC6C99", "#776491", "#495879"][i === 11 ? chartNum++ : chartNum]
+                        return colors[i === 11 ? chartNum++ : chartNum]
                     }
                     )
                     .style("opacity", "0")
-                    .transition(200)
+                    .transition(500)
                     .style("opacity", "1")
                     .attr("d", arc1)
                     .transition()
@@ -289,34 +287,34 @@ async function drawBars() {
     }
     initialSVG(year, province)
 
-    await sleep(3000).then(() => {
-        let year = "2014";
-        let province = "海南省"
-        updateArc(year, province)
-    })
+    // await sleep(3000).then(() => {
+    //     let year = "2014";
+    //     let province = "北京市"
+    //     updateArc(year, province)
+    // })
 
-    await sleep(3000).then(() => {
-        let year = "2015";
-        let province = "海南省"
-        updateArc(year, province)
-    })
+    // await sleep(3000).then(() => {
+    //     let year = "2015";
+    //     let province = "北京市"
+    //     updateArc(year, province)
+    // })
 
-    await sleep(3000).then(() => {
-        let year = "2016";
-        let province = "海南省"
-        updateArc(year, province)
-    })
-    await sleep(3000).then(() => {
-        let year = "2017";
-        let province = "海南省"
-        updateArc(year, province)
-    })
+    // await sleep(3000).then(() => {
+    //     let year = "2016";
+    //     let province = "北京市"
+    //     updateArc(year, province)
+    // })
+    // await sleep(3000).then(() => {
+    //     let year = "2017";
+    //     let province = "北京市"
+    //     updateArc(year, province)
+    // })
 
-    await sleep(3000).then(() => {
-        let year = "2018";
-        let province = "海南省"
-        updateArc(year, province)
-    })
+    // await sleep(3000).then(() => {
+    //     let year = "2018";
+    //     let province = "北京市"
+    //     updateArc(year, province)
+    // })
 
 }
 drawBars()
